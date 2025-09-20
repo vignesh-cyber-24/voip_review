@@ -1,0 +1,26 @@
+# VoIP Security System - Python Dependencies
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Blockchain & Web3
+web3>=6.11.0
+py-solc-x>=1.12.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Streamlit (for fallback dashboard)
+streamlit>=1.28.0
+streamlit-autorefresh>=0.0.1
+
+# Data Processing
+pandas>=2.1.0
+
+# Cryptography
+cryptography>=41.0.0
+
+# Additional utilities
+python-multipart>=0.0.6
+python-dotenv>=1.0.0

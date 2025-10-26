@@ -1,0 +1,4 @@
+INFO:     Will watch for changes in these directories: ['/home/vignesh/Documents/VOIP_SECURITY/Voip_security/Voip_security-main/voip_contract_project']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [10614] using StatReload
+ERROR:    Error loading ASGI app. Could not import module "api_server".

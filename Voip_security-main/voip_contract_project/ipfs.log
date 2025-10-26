@@ -1,0 +1,24 @@
+Initializing daemon...
+Kubo version: 0.30.0
+Repo version: 16
+System version: amd64/linux
+Golang version: go1.22.7
+PeerID: 12D3KooWCE4X14q8xBpYigg8QatiQbu6EEkcdCvB5RwzEPmMHwkP
+2025/10/25 21:28:39 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+Swarm listening on 10.6.6.1:4001 (TCP+UDP)
+Swarm listening on 10.7.7.1:4001 (TCP+UDP)
+Swarm listening on 127.0.0.1:4001 (TCP+UDP)
+Swarm listening on 172.17.0.1:4001 (TCP+UDP)
+Swarm listening on 172.26.220.172:4001 (TCP+UDP)
+Swarm listening on [::1]:4001 (TCP+UDP)
+Run 'ipfs id' to inspect announced and discovered multiaddrs of this node.
+RPC API server listening on /ip4/127.0.0.1/tcp/5001
+WebUI: http://127.0.0.1:5001/webui
+Gateway server listening on /ip4/127.0.0.1/tcp/8080
+Daemon is ready
+2025-10-25T21:29:42.568+0530	ERROR	cmd/ipfs	kubo/daemon.go:1128	
+⚠️ A NEW VERSION OF KUBO DETECTED
+
+This Kubo node is running an outdated version (0.30.0).
+46% of the sampled Kubo peers are running a higher version.
+Visit https://github.com/ipfs/kubo/releases or https://dist.ipfs.tech/#kubo and update to version 0.38.1 or later.

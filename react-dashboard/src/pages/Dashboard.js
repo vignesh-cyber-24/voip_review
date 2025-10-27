@@ -15,13 +15,29 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  // Fetch CDRs from API
+  // Fetch CDRs from API (with verification)
   const fetchCDRs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await cdrAPI.getAllCDRs();
-      setCdrs(response.cdrs || []);
+      const records = response.cdrs || [];
+
+      // ✅ Verify each CDR using backend
+      const verifiedResults = await Promise.all(
+        records.map(async (cdr, i) => {
+          try {
+            const verifyRes = await cdrAPI.verifyCDR(i, cdr.ipfs_cid);
+            return { ...cdr, verified: verifyRes.verified };
+          } catch (err) {
+            console.warn(`Verification failed for record ${i}:`, err.message);
+            return { ...cdr, verified: false };
+          }
+        })
+      );
+
+      setCdrs(verifiedResults);
       setLastRefresh(new Date());
     } catch (err) {
       console.error('Error fetching CDRs:', err);
@@ -38,7 +54,7 @@ const Dashboard = () => {
       return;
     }
 
-    const filtered = cdrs.filter(cdr => 
+    const filtered = cdrs.filter(cdr =>
       cdr.caller.toLowerCase().includes(searchValue.toLowerCase()) ||
       cdr.callee.toLowerCase().includes(searchValue.toLowerCase()) ||
       cdr.hash.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -56,10 +72,9 @@ const Dashboard = () => {
   // Calculate statistics
   const getStats = () => {
     const total = cdrs.length;
-    const verified = cdrs.filter(cdr => cdr.status === 'verified').length;
+    const verified = cdrs.filter(cdr => cdr.status === 'verified' || cdr.verified).length;
     const withIPFS = cdrs.filter(cdr => cdr.ipfs_cid).length;
     const errors = cdrs.filter(cdr => cdr.status === 'error' || cdr.status === 'mismatch').length;
-
     return { total, verified, withIPFS, errors };
   };
 
@@ -68,7 +83,7 @@ const Dashboard = () => {
   // Auto-refresh every 5 seconds
   useEffect(() => {
     fetchCDRs();
-    const interval = setInterval(fetchCDRs, 5000);
+    const interval = setInterval(fetchCDRs, 20000);
     return () => clearInterval(interval);
   }, [fetchCDRs]);
 
@@ -76,6 +91,14 @@ const Dashboard = () => {
   useEffect(() => {
     filterCDRs(searchTerm);
   }, [cdrs, searchTerm, filterCDRs]);
+
+  // Auto-dismiss error after 8 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,14 +143,21 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Message */}
+
+        {/* ✅ Updated Error Message Section */}
         {error && (
-          <div className="mb-6 bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg">
-            <div className="flex">
-              <span className="mr-2">⚠️</span>
-              <div>
-                <p className="font-medium">Error</p>
-                <p className="text-sm">{error}</p>
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm animate-fade-in">
+            <div className="flex items-start space-x-3">
+              <div className="text-red-600 text-xl">⚠️</div>
+              <div className="flex-1">
+                <p className="font-semibold text-red-800">Connection Error</p>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button
+                  onClick={fetchCDRs}
+                  className="mt-3 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-all"
+                >
+                  Retry Fetch
+                </button>
               </div>
             </div>
           </div>

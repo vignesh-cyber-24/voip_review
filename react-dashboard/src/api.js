@@ -1,4 +1,6 @@
+// src/api.js
 import axios from 'axios';
+import CryptoJS from 'crypto-js';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -33,9 +35,11 @@ api.interceptors.response.use(
   }
 );
 
-// API service functions
+// ===============================
+// CDR Blockchain API Service
+// ===============================
 export const cdrAPI = {
-  // Get all CDRs
+  // Fetch all stored CDRs
   getAllCDRs: async () => {
     try {
       const response = await api.get('/cdrs');
@@ -46,7 +50,7 @@ export const cdrAPI = {
     }
   },
 
-  // Get a specific CDR by ID
+  // Fetch a single CDR by ID
   getCDR: async (id) => {
     try {
       const response = await api.get(`/cdr/${id}`);
@@ -57,10 +61,20 @@ export const cdrAPI = {
     }
   },
 
-  // Store a new CDR
+  // Store a new CDR record on blockchain
   storeCDR: async (cdrData) => {
     try {
-      const response = await api.post('/store_cdr', cdrData);
+      // ✅ Build identical hash string to backend logic
+      // Backend recomputes: f"{caller}{callee}{timestamp}{duration}{status}"
+      const cdrString = `${cdrData.caller}${cdrData.callee}${cdrData.timestamp}${cdrData.duration}${cdrData.status}`;
+      const hash = CryptoJS.SHA256(cdrString).toString(CryptoJS.enc.Hex);
+
+      // Include the computed hash in payload
+      const payload = { ...cdrData, hash };
+
+      console.log(`[CDR HASH] Computed: ${hash}`);
+
+      const response = await api.post('/store_cdr', payload);
       return response.data;
     } catch (error) {
       console.error('Error storing CDR:', error);
@@ -68,7 +82,7 @@ export const cdrAPI = {
     }
   },
 
-  // Get total record count
+  // Get total blockchain record count
   getRecordCount: async () => {
     try {
       const response = await api.get('/record_count');
@@ -79,11 +93,12 @@ export const cdrAPI = {
     }
   },
 
-  // Verify a CDR
+  // Verify a stored CDR by blockchain index
   verifyCDR: async (idx, ipfsCid) => {
     try {
-      const response = await api.get(`/verify/${idx}`, {
-        params: { ipfs_cid: ipfsCid }
+      // Backend route: /verify_cdr/{idx}
+      const response = await api.get(`/verify_cdr/${idx}`, {
+        params: { ipfs_cid: ipfsCid },
       });
       return response.data;
     } catch (error) {
@@ -92,7 +107,7 @@ export const cdrAPI = {
     }
   },
 
-  // Health check
+  // Health check for API status
   healthCheck: async () => {
     try {
       const response = await api.get('/');
@@ -101,25 +116,27 @@ export const cdrAPI = {
       console.error('Health check failed:', error);
       throw error;
     }
-  }
+  },
 };
 
-// Utility functions
+// ===============================
+// Utility helper functions
+// ===============================
 export const utils = {
-  // Format timestamp to readable date
+  // Convert Unix timestamp to local date/time
   formatTimestamp: (timestamp) => {
     if (!timestamp) return 'N/A';
-    const date = new Date(timestamp * 1000); // Convert from Unix timestamp
+    const date = new Date(timestamp * 1000);
     return date.toLocaleString();
   },
 
-  // Truncate hash for display
+  // Shorten long hashes for UI
   truncateHash: (hash, length = 8) => {
     if (!hash) return 'N/A';
     return `${hash.substring(0, length)}...${hash.substring(hash.length - length)}`;
   },
 
-  // Get status color class
+  // Assign CSS color by status
   getStatusColor: (status) => {
     switch (status) {
       case 'verified':
@@ -134,7 +151,7 @@ export const utils = {
     }
   },
 
-  // Format status text
+  // Human-friendly status names
   formatStatus: (status) => {
     switch (status) {
       case 'verified':
@@ -150,14 +167,14 @@ export const utils = {
     }
   },
 
-  // Generate IPFS URLs
+  // Generate both local and public IPFS URLs
   getIPFSUrls: (cid) => {
     if (!cid) return { local: null, public: null };
     return {
       local: `http://127.0.0.1:8080/ipfs/${cid}`,
-      public: `https://ipfs.io/ipfs/${cid}`
+      public: `https://ipfs.io/ipfs/${cid}`,
     };
-  }
+  },
 };
 
 export default api;
